@@ -1,0 +1,51 @@
+# Core RAG dependencies with Ollama
+llama-index>=0.10.0
+llama-index-vector-stores-postgres>=0.6.0
+llama-index-llms-ollama>=0.3.0
+llama-index-embeddings-ollama>=0.2.0
+llama-index-readers-docling>=0.2.0
+
+# Document processing with Docling
+docling>=2.0.0
+docling-core>=2.0.0
+docling-ibm-models>=3.9.0
+
+# Transformers library with rt_detr_v2 support (4.56.1+ required for rt_detr_v2 model)
+transformers>=4.56.0
+
+# Database
+psycopg2-binary>=2.9.0
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+
+# Remove Google AI SDK since we're using Ollama
+# google-generativeai>=0.8.0
+
+# Agent framework
+crewai>=0.70.0
+crewai-tools
+
+# Observability
+arize-phoenix>=5.0.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+click>=8.0.0
+rich>=13.0.0
+tqdm>=4.60.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+
+# Logging
+structlog>=23.0.0
+
+# Additional dependencies
+nest-asyncio>=1.5.0
+httpx>=0.25.0
+
+# Document format support (for fallback only)
+python-docx>=1.0.0

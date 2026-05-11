@@ -1,0 +1,105 @@
+{
+  "evaluation_metadata": {
+    "timestamp": "2025-09-22T18:57:45.894618",
+    "evaluator_version": "1.0.0",
+    "ragas_version": "0.1.0",
+    "processing_mode": "crew_ai_agents",
+    "configuration": {
+      "embedding_model": "nomic-embed-text:v1.5",
+      "llm_model": "llama3.2:1b",
+      "top_k": 5,
+      "chunk_size": 1024,
+      "agents_enabled": true,
+      "agent_processing": "CrewAI Multi-Agent System"
+    }
+  },
+  "system_info": {},
+  "database_stats": {
+    "document_count": 5,
+    "chunk_count": 708,
+    "source_files": [
+      "Abu Dhabi Procurement Standards.PDF",
+      "HR Bylaws.pdf",
+      "Inforamation Security.pdf",
+      "Procurement Manual (Ariba Aligned).PDF",
+      "Procurement Manual (Business Process).PDF"
+    ]
+  },
+  "evaluation_results": {
+    "timestamp": "2025-09-22T18:57:45.894618",
+    "total_questions": 3,
+    "metrics_evaluated": [
+      "answer_similarity",
+      "context_recall",
+      "faithfulness",
+      "answer_relevancy",
+      "context_precision",
+      "answer_correctness"
+    ],
+    "scores": {
+      "answer_similarity": {
+        "mean": 0.7676371181669692,
+        "std": 0.13065784503403108,
+        "min": 0.5883683601969889,
+        "max": 0.8960560690244295,
+        "individual_scores": [
+          0.5883683601969889,
+          0.8960560690244295,
+          0.8184869252794891
+        ]
+      },
+      "context_recall": {
+        "mean": 0.8333333333333334,
+        "std": 0.23570226039551584,
+        "min": 0.5,
+        "max": 1.0,
+        "individual_scores": [
+          1.0,
+          1.0,
+          0.5
+        ]
+      },
+      "faithfulness": {
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "individual_scores": [
+          1.0
+        ]
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "individual_scores": [],
+        "note": "All values were NaN"
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "individual_scores": [],
+        "note": "All values were NaN"
+      },
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "individual_scores": [],
+        "note": "All values were NaN"
+      }
+    }
+  },
+  "summary": {
+    "overall_performance": "excellent",
+    "best_metric": "faithfulness",
+    "worst_metric": "answer_relevancy",
+    "recommendations": [
+      "Overall performance is good. Consider fine-tuning for specific use cases."
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: agentic_rag_postgres
+    environment:
+      POSTGRES_DB: agentic_rag
+      POSTGRES_USER: raguser
+      POSTGRES_PASSWORD: ragpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raguser -d agentic_rag"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - rag_network
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: agentic_rag_phoenix
+    ports:
+      - "6006:6006"
+    environment:
+      PHOENIX_HOST: "0.0.0.0"
+      PHOENIX_PORT: "6006"
+    volumes:
+      - phoenix_data:/app/data
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+  # Document Indexer (runs as needed)
+  document_indexer:
+    build:
+      context: ./indexer
+      dockerfile: Dockerfile
+    container_name: agentic_rag_indexer
+    environment:
+      DATABASE_URL: "postgresql://raguser:ragpassword@postgres:5432/agentic_rag"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      PHOENIX_BASE_URL: "http://phoenix:6006"
+    volumes:
+      - ./indexer:/app
+      - ./documents:/app/documents
+      - ./markdown_output:/app/markdown_output
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rag_network
+    profiles:
+      - indexer
+
+  # Custom Backend API
+  rag_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agentic_rag_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://raguser:ragpassword@postgres:5432/agentic_rag"
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      PHOENIX_BASE_URL: "http://phoenix:6006"
+    volumes:
+      - ./backend:/app
+      - ./documents:/app/documents
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - rag_network
+    profiles:
+      - backend
+
+  # Ollama Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentic_rag_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - rag_network
+    restart: unless-stopped
+    # Uncomment the next lines if you have NVIDIA GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # OpenWebUI
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: agentic_rag_openwebui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OPENAI_API_BASE_URL=http://agentic_rag_backend:8000/api
+      - OPENAI_API_KEY=dummy-key-for-agentic-rag
+      - WEBUI_SECRET_KEY=your-secret-key-change-this-in-production
+      - WEBUI_NAME=Agentic RAG Assistant
+      - DEFAULT_USER_ROLE=user
+    volumes:
+      - openwebui_data:/app/backend/data
+    depends_on:
+      - ollama
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  phoenix_data:
+  ollama_data:
+  openwebui_data:
+
+networks:
+  rag_network:
+    driver: bridge

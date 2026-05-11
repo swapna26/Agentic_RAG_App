@@ -1,0 +1,60 @@
+# Python
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+evaluator/venv
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Source documents (large PDFs/DOCX - keep in local only)
+indexer/documents/*.pdf
+indexer/documents/*.PDF
+indexer/documents/*.docx
+documents/
+
+# Markdown output backups
+markdown_output_backup/
+
+# Claude Code
+.claude/
+

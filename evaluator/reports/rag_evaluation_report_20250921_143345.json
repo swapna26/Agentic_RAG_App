@@ -1,0 +1,71 @@
+{
+  "evaluation_metadata": {
+    "timestamp": "2025-09-21T14:33:45.008129",
+    "evaluator_version": "1.0.0",
+    "ragas_version": "0.1.0",
+    "configuration": {
+      "embedding_model": "nomic-embed-text:v1.5",
+      "llm_model": "llama3.2:1b",
+      "top_k": 5,
+      "chunk_size": 1024
+    }
+  },
+  "system_info": {},
+  "database_stats": {
+    "document_count": 5,
+    "chunk_count": 708,
+    "source_files": [
+      "Abu Dhabi Procurement Standards.PDF",
+      "HR Bylaws.pdf",
+      "Inforamation Security.pdf",
+      "Procurement Manual (Ariba Aligned).PDF",
+      "Procurement Manual (Business Process).PDF"
+    ]
+  },
+  "evaluation_results": {
+    "timestamp": "2025-09-21T14:33:45.008129",
+    "total_questions": 11,
+    "metrics_evaluated": [
+      "context_recall",
+      "answer_similarity"
+    ],
+    "scores": {
+      "context_recall": {
+        "mean": 1.0,
+        "std": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "individual_scores": [
+          1.0
+        ]
+      },
+      "answer_similarity": {
+        "mean": 0.820408856320419,
+        "std": 0.07523775575522933,
+        "min": 0.6886836379008762,
+        "max": 0.921675557483602,
+        "individual_scores": [
+          0.7285148995156109,
+          0.8370419612179265,
+          0.8377877145446284,
+          0.7545565381630083,
+          0.7477937885661077,
+          0.8855889750455284,
+          0.921675557483602,
+          0.6886836379008762,
+          0.8361537416055627,
+          0.8722372462630843,
+          0.9144633592186746
+        ]
+      }
+    }
+  },
+  "summary": {
+    "overall_performance": "excellent",
+    "best_metric": "context_recall",
+    "worst_metric": "answer_similarity",
+    "recommendations": [
+      "Overall performance is good. Consider fine-tuning for specific use cases."
+    ]
+  }
+}

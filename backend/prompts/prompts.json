@@ -1,0 +1,112 @@
+{
+  "prompts": {
+    "query_analysis": {
+      "name": "Query Analysis",
+      "description": "Analyzes user queries for better document retrieval",
+      "tags": [
+        "rag",
+        "query-analysis"
+      ],
+      "active_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "template": "Analyze the following user query and optimize it for document retrieval:\n\nQuery: {query}\n\nYour tasks:\n1. Identify key concepts and topics\n2. Extract important keywords\n3. Determine the query intent and type\n4. Suggest improvements for better retrieval\n\nProvide clear analysis and an optimized query.",
+          "variables": [
+            "query"
+          ],
+          "created_at": "2025-01-01T00:00:00+00:00",
+          "created_by": "system",
+          "changelog": "Initial version"
+        },
+        {
+          "version": 2,
+          "template": "You are an expert query optimizer.\n\nAnalyze this query and rewrite it for maximum retrieval effectiveness:\n\nQuery: {query}\n\nSteps:\n1. Identify the core intent\n2. Expand with synonyms\n3. Remove noise words\n4. Output the optimized query",
+          "variables": [
+            "query"
+          ],
+          "created_at": "2026-05-05T16:25:07.756612+00:00",
+          "created_by": "admin",
+          "changelog": "Improved with expert role and synonym expansion step"
+        },
+        {
+          "version": 3,
+          "template": "You are a search optimization expert.\n\nRewrite this query for maximum precision:\nQuery: {query}\n\n1. Remove ambiguity\n2. Add domain-specific terms\n3. Structure for vector search\n\nOutput: optimized query only.",
+          "variables": [
+            "query"
+          ],
+          "created_at": "2026-05-05T17:39:49.190643+00:00",
+          "created_by": "demo_user",
+          "changelog": "Optimized for vector search"
+        }
+      ]
+    },
+    "document_retrieval": {
+      "name": "Document Retrieval",
+      "description": "Retrieves and ranks relevant documents",
+      "tags": [
+        "rag",
+        "retrieval"
+      ],
+      "active_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "template": "Find and retrieve the most relevant documents for this query:\n\nQuery: {query}\nAvailable Documents: {document_list}\n\nYour tasks:\n1. Identify which documents are most relevant\n2. Rank them by relevance to the query\n3. Explain why each document is relevant\n4. Provide key excerpts from top documents\n\nFocus on documents that directly answer the user's question.",
+          "variables": [
+            "query",
+            "document_list"
+          ],
+          "created_at": "2025-01-01T00:00:00+00:00",
+          "created_by": "system",
+          "changelog": "Initial version"
+        }
+      ]
+    },
+    "response_generation": {
+      "name": "Response Generation",
+      "description": "Generates responses from retrieved documents",
+      "tags": [
+        "rag",
+        "generation"
+      ],
+      "active_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "template": "Generate a comprehensive response based on the retrieved documents:\n\nOriginal Query: {query}\nRetrieved Documents: {documents}\n\nYour tasks:\n1. Synthesize information from the documents\n2. Create a clear, well-structured answer\n3. Include proper source citations\n4. Ensure factual accuracy\n5. Address the query directly\n\nThe response should be informative and properly sourced.",
+          "variables": [
+            "query",
+            "documents"
+          ],
+          "created_at": "2025-01-01T00:00:00+00:00",
+          "created_by": "system",
+          "changelog": "Initial version"
+        }
+      ]
+    },
+    "response_validation": {
+      "name": "Response Validation",
+      "description": "Validates and improves generated responses",
+      "tags": [
+        "rag",
+        "validation"
+      ],
+      "active_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "template": "Review and validate this generated response:\n\nOriginal Query: {query}\nGenerated Response: {response}\nSource Documents: {sources}\n\nYour tasks:\n1. Check factual accuracy against sources\n2. Verify proper source citations\n3. Ensure the response fully addresses the query\n4. Check for clarity and coherence\n5. Suggest improvements if needed\n\nProvide the final validated response or corrections.",
+          "variables": [
+            "query",
+            "response",
+            "sources"
+          ],
+          "created_at": "2025-01-01T00:00:00+00:00",
+          "created_by": "system",
+          "changelog": "Initial version"
+        }
+      ]
+    }
+  }
+}
