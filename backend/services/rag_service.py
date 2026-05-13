@@ -30,6 +30,7 @@ from llama_index.core.llms import ChatMessage
 from config import BackendConfig
 from services.conversation_service import ConversationService
 from services.cache_service import CacheService
+from services.guardrails_service import GuardrailsService
 
 logger = structlog.get_logger()
 
@@ -76,6 +77,7 @@ class RAGService:
         self.phoenix_service = None  # Injected from main.py
         self.conversation_service = None  # PostgreSQL conversation storage
         self.cache_service = None  # Injected from main.py
+        self.guardrails_service = None  # Initialized during setup
         
         # Rate limiting configuration
         self.last_request_time = 0
@@ -191,6 +193,11 @@ class RAGService:
             else:
                 # Cache was injected externally, set embedding model
                 self.cache_service.embedding_model = self.embedding_model
+
+            # Initialize guardrails service
+            if self.guardrails_service is None:
+                self.guardrails_service = GuardrailsService()
+            logger.info("Guardrails service initialized")
 
             # Initialize CrewAI agents
             await self._initialize_crew_agents()
@@ -556,6 +563,25 @@ class RAGService:
 
                 return result
 
+            # Run input guardrails before any processing
+            if self.guardrails_service:
+                guardrail_result = self.guardrails_service.check_input(question)
+                if not guardrail_result.passed:
+                    logger.warning("Query blocked by guardrails",
+                                 guardrail=guardrail_result.guardrail_name,
+                                 reason=guardrail_result.message)
+                    return {
+                        "response": guardrail_result.message,
+                        "sources": [],
+                        "metadata": {
+                            "model": self.config.ollama_model,
+                            "conversation_id": conversation_id,
+                            "source_count": 0,
+                            "processing_mode": "guardrail_blocked",
+                            "guardrail": guardrail_result.guardrail_name,
+                        }
+                    }
+
             # Check cache before expensive processing
             if self.cache_service:
                 cached = await self.cache_service.get(question)
@@ -653,6 +679,20 @@ class RAGService:
                             result.get('sources', []),
                             result.get("metadata", {})
                         )
+
+                    # Run output guardrails before returning
+                    if self.guardrails_service:
+                        output_result = self.guardrails_service.check_output(
+                            result["response"],
+                            result.get("sources", []),
+                            question,
+                        )
+                        result["response"] = output_result.details.get(
+                            "cleaned_response", result["response"]
+                        )
+                        warnings = output_result.details.get("warnings", [])
+                        if warnings:
+                            result["metadata"]["guardrail_warnings"] = warnings
 
                     # Store in cache for future identical/similar queries
                     if self.cache_service:

@@ -290,6 +290,10 @@ app.include_router(prompts_router, prefix="/api")
 from routers.cache import router as cache_router
 app.include_router(cache_router, prefix="/api")
 
+# Include guardrails management endpoints
+from routers.guardrails import router as guardrails_router
+app.include_router(guardrails_router, prefix="/api")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
