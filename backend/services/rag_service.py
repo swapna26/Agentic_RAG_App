@@ -31,6 +31,7 @@ from config import BackendConfig
 from services.conversation_service import ConversationService
 from services.cache_service import CacheService
 from services.guardrails_service import GuardrailsService
+from services.fraud_detection_service import FraudDetectionService
 
 logger = structlog.get_logger()
 
@@ -78,6 +79,7 @@ class RAGService:
         self.conversation_service = None  # PostgreSQL conversation storage
         self.cache_service = None  # Injected from main.py
         self.guardrails_service = None  # Initialized during setup
+        self.fraud_detection_service = None  # Initialized during setup
         
         # Rate limiting configuration
         self.last_request_time = 0
@@ -199,6 +201,18 @@ class RAGService:
                 self.guardrails_service = GuardrailsService()
             logger.info("Guardrails service initialized")
 
+            # Initialize fraud detection service
+            if self.fraud_detection_service is None:
+                try:
+                    self.fraud_detection_service = FraudDetectionService(
+                        database_url=self.config.database_url
+                    )
+                    await self.fraud_detection_service.initialize()
+                    logger.info("Fraud detection service initialized")
+                except Exception as e:
+                    logger.warning("Fraud detection service not available", error=str(e))
+                    self.fraud_detection_service = None
+
             # Initialize CrewAI agents
             await self._initialize_crew_agents()
 
@@ -288,6 +302,16 @@ class RAGService:
         ]
 
         return any(re.match(pattern, message_lower) for pattern in greeting_patterns)
+
+    def _is_fraud_query(self, message: str) -> bool:
+        """Check if the message is related to fraud detection."""
+        message_lower = message.lower()
+        fraud_keywords = [
+            "fraud", "fraudulent", "suspicious transaction",
+            "is this transaction", "detect fraud", "check transaction",
+            "legitimate transaction", "credit card fraud",
+        ]
+        return any(kw in message_lower for kw in fraud_keywords)
 
     # Topic change detection removed - now handled at router level for better consistency
 
@@ -581,6 +605,26 @@ class RAGService:
                             "guardrail": guardrail_result.guardrail_name,
                         }
                     }
+
+            # Route fraud detection queries to fraud crew
+            if self._is_fraud_query(question) and self.crew_agents and self.crew_agents.fraud_agent:
+                try:
+                    logger.info("Routing to fraud detection agent")
+                    crew = self.crew_agents.create_fraud_crew(question)
+                    result = crew.kickoff()
+                    response_text = self.crew_agents._clean_response(str(result))
+                    return {
+                        "response": response_text,
+                        "sources": [],
+                        "metadata": {
+                            "model": self.config.ollama_model,
+                            "conversation_id": conversation_id,
+                            "source_count": 0,
+                            "processing_mode": "fraud_detection",
+                        }
+                    }
+                except Exception as e:
+                    logger.error("Fraud detection failed", error=str(e))
 
             # Check cache before expensive processing
             if self.cache_service:

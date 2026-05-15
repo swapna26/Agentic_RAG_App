@@ -294,6 +294,10 @@ app.include_router(cache_router, prefix="/api")
 from routers.guardrails import router as guardrails_router
 app.include_router(guardrails_router, prefix="/api")
 
+# Include fraud detection endpoints
+from routers.fraud import router as fraud_router
+app.include_router(fraud_router, prefix="/api")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

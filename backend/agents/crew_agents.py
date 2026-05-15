@@ -24,6 +24,7 @@ from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.core import VectorStoreIndex
 from llama_index.embeddings.ollama import OllamaEmbedding
 from config import BackendConfig
+from services.fraud_detection_service import FraudDetectionService
 
 # Explicitly disable OpenAI for CrewAI to prevent API key errors
 os.environ['OPENAI_API_KEY'] = ''
@@ -193,6 +194,47 @@ Content: {content}
                 return f"Error retrieving documents: {str(e)}. Please check your database connection and try again."
         
         return document_retrieval_tool
+
+    def _create_fraud_detection_tool(self):
+        """Create a fraud detection tool using the @tool decorator."""
+        fraud_service = getattr(self.rag_service, 'fraud_detection_service', None)
+
+        @tool("Fraud Detection Tool")
+        def fraud_detection_tool(transaction_data: str) -> str:
+            """Analyzes a credit card transaction for fraud. Pass transaction features as JSON with keys: V1-V28 (PCA features), Amount_scaled, Time_scaled.
+
+            Args:
+                transaction_data: JSON string with transaction features
+            """
+            import json
+            try:
+                if not fraud_service or not fraud_service.is_loaded:
+                    return "Error: Fraud detection model is not available."
+
+                data = json.loads(transaction_data)
+                result = fraud_service.predict(data)
+
+                if result["is_fraud"]:
+                    return (
+                        f"FRAUD DETECTED - This transaction is likely fraudulent. "
+                        f"Fraud probability: {result['fraud_probability']:.1%}. "
+                        f"Model version: {result['model_version']}."
+                    )
+                else:
+                    return (
+                        f"LEGITIMATE - This transaction appears legitimate. "
+                        f"Fraud probability: {result['fraud_probability']:.1%}. "
+                        f"Model version: {result['model_version']}."
+                    )
+            except json.JSONDecodeError:
+                return "Error: Invalid JSON. Provide transaction features as valid JSON."
+            except ValueError as e:
+                return f"Error: {str(e)}"
+            except Exception as e:
+                logger.error("Fraud detection failed", error=str(e))
+                return f"Error running fraud detection: {str(e)}"
+
+        return fraud_detection_tool
 
     def _clean_response(self, response: str) -> str:
         """Clean the response to remove exposed thought processes and unwanted content."""
@@ -384,7 +426,30 @@ Content: {content}
             max_iter=1,
             max_execution_time=600
         )
-    
+
+        # --- FRAUD DETECTION AGENT ---
+        fraud_service = getattr(self.rag_service, 'fraud_detection_service', None)
+        if fraud_service and fraud_service.is_loaded:
+            fraud_tool = self._create_fraud_detection_tool()
+            self.fraud_agent = Agent(
+                role="Fraud Detection Analyst",
+                goal="Analyze credit card transactions to detect potential fraud using machine learning",
+                backstory="""You are a fraud detection specialist. You analyze credit card transaction
+                data using a trained machine learning model. When given transaction features, you use
+                the Fraud Detection Tool to classify them as fraudulent or legitimate. You explain the
+                results clearly, including the fraud probability score.""",
+                tools=[fraud_tool],
+                llm=self.llm,
+                verbose=self.config.crew_verbose,
+                allow_delegation=False,
+                max_iter=2,
+                max_execution_time=300
+            )
+            logger.info("Fraud detection agent initialized")
+        else:
+            self.fraud_agent = None
+            logger.info("Fraud detection agent not available (model not loaded)")
+
     def create_crew(self, query: str) -> Crew:
         """Create a crew for processing a specific query."""
         
@@ -501,6 +566,34 @@ Return only the final cleaned answer text.""",
         
         return crew
     
+    def create_fraud_crew(self, query: str) -> Crew:
+        """Create a crew for processing fraud detection queries."""
+        if not self.fraud_agent:
+            raise RuntimeError("Fraud detection agent not available")
+
+        fraud_task = Task(
+            description=f"""Analyze the following fraud detection request:
+
+{query}
+
+Instructions:
+1. Extract the transaction data (JSON with V1-V28, Amount_scaled, Time_scaled)
+2. Use the Fraud Detection Tool to classify the transaction
+3. Report whether the transaction is fraudulent or legitimate
+4. Include the fraud probability score in your response""",
+            agent=self.fraud_agent,
+            expected_output="Fraud detection result with probability score"
+        )
+
+        return Crew(
+            agents=[self.fraud_agent],
+            tasks=[fraud_task],
+            process=Process.sequential,
+            verbose=False,
+            memory=False,
+            max_execution_time=300
+        )
+
     async def process_query(self, query: str) -> Dict[str, Any]:
         """
         Process user query using the multi-agent CrewAI system.
